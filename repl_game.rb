@@ -1,4 +1,5 @@
 require "io/console"
+require "./enhance_io.rb"
 
 # Modify class String with method to reverse colors
 class String
@@ -26,78 +27,6 @@ def show_items(items, type = "column", indent = false)
   end
   puts
 end
-
-# Gather input character by character and do autocomplete based on items passed
-def input_auto(items)
-  char = ""
-  chars = []
-  pos = 0
-  rest_of_word = "" # acts as buffer for autocomplete
-
-    while char != "\r"
-        char = STDIN.getch.downcase
-
-        if char == "\u007F" # backspace
-          #Clear whole line using escape sequence \r to go to beginning of line
-          print "\r" + " " * 80 + "\r"
-          chars.pop
-          print chars.join
-          pos -= 1
-          rest_of_word = "" # clear autocomplete buffer
-        elsif char == "\r" # Return
-          #Clear whole line using escape sequence \r to go to beginning of line
-          print "\r" + " " * 80 + "\r"
-          puts chars.join + rest_of_word
-          break
-        elsif char == "\t" # Tab
-          # Clear whole line using escape sequence \r to go to beginning of line
-          # Define whole word (chars)
-          print "\r" + " " * 80 + "\r"
-          print chars.join + rest_of_word
-          chars = chars + rest_of_word.chars
-          rest_of_word = ""
-          #break
-        elsif char == "\u0003" # CTRL-C or Return
-          #Clear whole line using escape sequence \r to go to beginning of line
-          print "\r" + " " * 80 + "\r"
-          puts chars.join + rest_of_word
-          exit # Stop program execution
-        # elsif char == "\e" # other cases, such as arrow keys
-          # For future: http://www.alecjacobson.com/weblog/?p=75
-          # Arrow keys send \e, [, a as different characters.
-          # So for now; this case is not fully implemented.
-        else
-          pos += 1
-          print char
-          chars << char # Put the character typed into array chars
-
-          # Compare each word so far, with items to see if a match
-          found_item = 0
-          for item in items
-            if chars.join == item.downcase.slice(0,pos)
-              if found_item == 0
-                # found_item set to one will stop searching array after first match if there are multiple matches
-                found_item = 1
-                print " " * 80 # clear line from current position
-                (1..80).each { print "\e[D" } # go back 80 spaces
-                rest_of_word = item.downcase.slice(pos, item.length)
-                print rest_of_word.reverse_color
-                #print "K"
-                cursor_pos = pos + rest_of_word.length
-                (1..rest_of_word.length).each { print "\e[D" }
-              end # if
-            elsif found_item == 0
-              # Occurs when hitting a different letter once autocomplete has started,
-              # or if there was never a match.
-              rest_of_word = ""
-              print " " * 80 # clear line from current position
-              (1..80).each { print "\e[D" } # go back 80 spaces
-            end # if
-          end # for
-        end # if
-    end # while
-    return chars.join + rest_of_word
-end # def
 
 # Define the castle data structure
 castle = {
@@ -191,7 +120,7 @@ gets.chomp
 puts
 until hero == "prince" || hero == "princess"
   puts "Are you a Prince or a Princess?"
-  hero = input_auto(["prince","princess"])
+  hero = EnhanceIO.input_auto(["prince","princess"])
 end
 puts
 until !(name == "")
@@ -226,7 +155,7 @@ while score < 5 && wrong_answers < 2
   until rooms.include? current_room
     puts "YOUR SCORE IS: #{score} / 5. Please pick which room you would like to visit: "
     show_items(rooms, "list")
-    current_room = input_auto(rooms)
+    current_room = EnhanceIO.input_auto(rooms)
   end
   if castle[current_room][:visited] == true
     puts
@@ -248,7 +177,7 @@ while score < 5 && wrong_answers < 2
     while response == ""
       puts challenges[current_id][:question]
       show_items(challenges[current_id][:options], "column", true)
-      response = input_auto(challenges[current_id][:options])
+      response = EnhanceIO.input_auto(challenges[current_id][:options])
     end
 
     if response == challenges[current_id][:answer]
